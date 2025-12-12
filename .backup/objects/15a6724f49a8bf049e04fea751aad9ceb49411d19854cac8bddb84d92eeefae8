@@ -1,0 +1,24 @@
+#!/bin/bash
+# 1. 准备环境
+wrangler login
+
+# 2. 创建命名空间 (如果不存在)
+wrangler kv:namespace create VIDEO_KV
+wrangler kv:namespace create APP_CONFIG
+
+# 3. 设置密钥
+wrangler secret put JWT_SECRET
+
+# 4. 替换配置中的ID
+VIDEO_KV_ID=$(wrangler kv:namespace list | grep VIDEO_KV | awk -F'│' '{print $3}' | tr -d ' ')
+CONFIG_ID=$(wrangler kv:namespace list | grep APP_CONFIG | awk -F'│' '{print $3}' | tr -d ' ')
+
+# 5. 更新配置文件
+sed -i "s/your_video_kv_id/$VIDEO_KV_ID/g" wrangler.toml
+sed -i "s/your_config_id/$CONFIG_ID/g" wrangler.toml
+
+# 6. 部署Worker
+wrangler deploy
+
+# 7. 部署前端
+cd frontend && wrangler pages deploy --project-name=video-platform
