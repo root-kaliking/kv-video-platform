@@ -1,0 +1,19 @@
+// 在响应格式中添加审核状态标记
+
+// 修改handleVideoMetadata函数
+async function handleVideoMetadata(videoId, kv) {
+  const meta = await kv.get(`meta:${videoId}`, 'json');
+  if (!meta) return new Response('Not Found', { status: 404, headers });
+  
+  // 过滤敏感信息(管理员可见)
+  const publicResult = {
+    id: meta.id,
+    title: meta.title,
+    status: meta.status,
+    createdAt: meta.createdAt,
+    updatedAt: meta.updatedAt || null,
+    rejectedReason: meta.status === 'rejected' ? meta.reviewReason : null
+  };
+  
+  return new Response(JSON.stringify(publicResult), { headers });
+}

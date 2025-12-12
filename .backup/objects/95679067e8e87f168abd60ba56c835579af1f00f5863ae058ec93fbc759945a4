@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>KV视频目录</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <h1>视频列表</h1>
+  <div id="video-list"><!-- JS动态加载 --></div>
+  <script src="assets/script.js"></script>
+</body>
+</html>

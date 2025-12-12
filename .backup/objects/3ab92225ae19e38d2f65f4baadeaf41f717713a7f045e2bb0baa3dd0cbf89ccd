@@ -1,0 +1,35 @@
+class KVVideoPlayer {
+  constructor(videoId) {
+    this.videoId = videoId;
+    this.chunks = [];
+    this.loadedChunks = 0;
+  }
+  
+  async init() {
+    const meta = await fetch(`/api/video/${this.videoId}`);
+    this.totalChunks = meta.totalChunks;
+    
+    // 并行获取所有分片
+    for (let i = 0; i < this.totalChunks; i++) {
+      this.fetchChunk(i);
+    }
+  }
+
+  async fetchChunk(index) {
+    const res = await fetch(`/api/video/${this.videoId}/chunk/${index}`);
+    this.chunks[index] = await res.arrayBuffer();
+    this.loadedChunks++;
+    this.updateProgress();
+    
+    if (this.loadedChunks === this.totalChunks) {
+      this.assembleVideo();
+    }
+  }
+  
+  assembleVideo() {
+    // Blob拼接逻辑
+    const blob = new Blob(this.chunks, { type: 'video/mp4' });
+    const videoUrl = URL.createObjectURL(blob);
+    document.querySelector('video').src = videoUrl;
+  }
+}

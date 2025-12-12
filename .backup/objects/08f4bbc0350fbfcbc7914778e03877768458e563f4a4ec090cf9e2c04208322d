@@ -1,0 +1,24 @@
+# 在原有基础上添加认证和环境变量
+name = "cf-kv-video"
+type = "javascript"
+
+account_id = "YOUR_ACCOUNT_ID"
+workers_dev = true
+
+kv_namespaces = [
+  { binding = "VIDEO_KV", id = "YOUR_KV_NAMESPACE_ID" }
+]
+
+[vars]
+JWT_SECRET = "YOUR_SECURE_JWT_SECRET"  # 用于签名JWT
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "YOUR_SECURE_PASSWORD_HASH"  # 使用bcrypt哈希后的密码
+
+[build]
+command = "npm install && npm run build"
+
+dir = "worker"
+
+[[rules]]
+type = "Text"
+path = "/admin/*"

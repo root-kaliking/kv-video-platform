@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>系统首次初始化</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+        }
+        h1 { color: #2563eb; }
+        h2, h3 { color: #333; }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #1d4ed8; }
+    </style>
+    <script>
+        async function initSystem() {
+            // 邮箱服务配置
+            const mailApi = document.getElementById('mail_api').value;
+            const mailAdmin = document.getElementById('mail_admin').value;
+            const mailPass = document.getElementById('mail_pass').value;
+            
+            // 网站管理员
+            const siteAdmin = document.getElementById('site_admin').value;
+            const sitePass = document.getElementById('site_pass').value;
+            
+            if (!mailApi || !mailAdmin || !mailPass || !siteAdmin || !sitePass) {
+                alert('所有字段必须填写');
+                return;
+            }
+            
+            const response = await fetch('/api/init', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    mail_service: { api: mailApi, admin: mailAdmin, password: mailPass },
+                    site_admin: { username: siteAdmin, password: sitePass }
+                })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('系统初始化成功！您现在可以使用邮箱注册功能');
+                window.location.href = '/';
+            } else {
+                alert(`初始化失败: ${result.error}`);
+            }
+        }
+    </script>
+</head>
+<body style="max-width: 500px; margin: 50px auto">
+    <h1>欢迎使用视频服务平台</h1>
+    <h2>首次运行初始化</h2>
+    
+    <div class="section">
+        <h3>邮箱服务配置</h3>
+        <label>邮箱API地址：</label>
+        <input type="text" id="mail_api" 
+               placeholder="https://your-mail-service/api" 
+               required>
+        
+        <label>邮箱管理员账号：</label>
+        <input type="text" id="mail_admin" 
+               placeholder="admin@yourdomain.com" 
+               required>
+        
+        <label>邮箱管理员密码：</label>
+        <input type="password" id="mail_pass" required>
+    </div>
+    
+    <div class="section">
+        <h3>网站管理员账户</h3>
+        <label>管理员用户名：</label>
+        <input type="text" id="site_admin" 
+               placeholder="网站管理员" 
+               required>
+        
+        <label>管理员密码：</label>
+        <input type="password" id="site_pass" required>
+    </div>
+    
+    <button onclick="initSystem()">完成初始化</button>
+</body>
+</html>

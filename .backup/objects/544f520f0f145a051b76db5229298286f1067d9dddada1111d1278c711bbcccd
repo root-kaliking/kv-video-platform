@@ -1,0 +1,18 @@
+// 视频切割工具 (需本地安装ffmpeg)
+const ffmpeg = require('fluent-ffmpeg');
+const { createWriteStream } = require('fs');
+
+async function splitVideo(inputPath, chunkSizeMB = 24.9) {
+  // 关键帧切割逻辑
+  const meta = {
+    id: generateVideoId(),
+    title: path.basename(inputPath),
+    chunks: []
+  };
+  
+  // FFmpeg切割实现
+  return meta;
+}
+
+// Cloudflare API 上传函数
+async function uploadToKV(meta, chunks) {...}

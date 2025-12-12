@@ -1,0 +1,67 @@
+// Cloudflare Worker完整实现
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    
+    // 设置跨域头
+    const headers = {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET',
+      'Content-Type': 'application/json'
+    };
+    
+    // API路由
+    if (url.pathname === '/api/videos') {
+      return handleVideos(request, env.VIDEO_KV);
+    }
+    
+    if (url.pathname.startsWith('/api/video/')) {
+      const match = url.pathname.match(/\/api\/video\/([^\/]+)/);
+      if (!match) return new Response('Invalid ID', { status: 400 });
+      
+      const videoId = match[1];
+      
+      // 元数据接口
+      if (url.pathname.endsWith(`/api/video/${videoId}`)) {
+        return handleVideoMetadata(videoId, env.VIDEO_KV);
+      }
+      
+      // 分片接口
+      const chunkMatch = url.pathname.match(/chunk\/(\d+)$/);
+      if (chunkMatch) {
+        const chunkIndex = parseInt(chunkMatch[1]);
+        return handleVideoChunk(videoId, chunkIndex, env.VIDEO_KV);
+      }
+    }
+    
+    return new Response('Not Found', { status: 404, headers });
+  }
+};
+
+// 获取视频列表
+async function handleVideos(request, kv) {
+  const videos = await kv.get('index:all_videos', 'json');
+  return new Response(JSON.stringify(videos || []), { headers });
+}
+
+// 获取视频元数据
+async function handleVideoMetadata(videoId, kv) {
+  const meta = await kv.get(`meta:${videoId}`, 'json');
+  if (!meta) return new Response('Not Found', { status: 404, headers });
+  return new Response(JSON.stringify(meta), { headers });
+}
+
+// 获取视频分片
+async function handleVideoChunk(videoId, chunkIndex, kv) {
+  const chunkKey = `chunk:${videoId}_${chunkIndex}`;
+  const videoChunk = await kv.get(chunkKey, 'arrayBuffer');
+  
+  if (!videoChunk) return new Response('Chunk not found', { status: 404 });
+  
+  return new Response(videoChunk, {
+    headers: {
+      'Content-Type': 'video/mp4',
+      'Cache-Control': 'public, max-age=86400'
+    }
+  });
+}

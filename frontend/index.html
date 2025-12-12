@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <!-- 现有头部不变 -->
+  <script>
+    // 添加初始化检查
+    async function checkInitialization() {
+      const res = await fetch('/api/init/status');
+      const data = await res.json();
+      
+      if (!data.initialized) {
+        window.location.href = '/init.html';
+      }
+    }
+    
+    // 在页面加载时执行
+    window.addEventListener('DOMContentLoaded', checkInitialization);
+  </script>
+</head>
+<body>
+  <!-- 现有主体不变 -->
+</body>
+</html>

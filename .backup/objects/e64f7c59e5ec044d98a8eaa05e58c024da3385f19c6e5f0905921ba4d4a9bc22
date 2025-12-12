@@ -1,0 +1,9 @@
+name = "cf-kv-video"
+type = "javascript"
+
+account_id = "YOUR_ACCOUNT_ID"
+workers_dev = true
+
+kv_namespaces = [
+  { binding = "VIDEO_KV", id = "YOUR_KV_NAMESPACE_ID" }
+]

@@ -1,0 +1,21 @@
+# 新增模块配置和许可
+name = "cf-kv-video"
+
+# 启用Node.js模块支持
+node_compat = true
+
+# 添加新的KV命名空间
+kv_namespaces = [
+  { binding = "VIDEO_KV", id = "..." },
+  { binding = "APP_CONFIG", id = "config-store", preview_id = "..." }
+]
+
+# 新增权限（用于发送邮件）
+[[dispatch_namespaces]]
+name = "mail-services"
+target_namespace = "cf-mail-workers"
+
+# 初始默认值
+[vars]
+DEFAULT_MAIL_API = "https://cloudmail.example/api"
+INIT_STATE = "pending"

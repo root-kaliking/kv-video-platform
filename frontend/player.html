@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>视频播放器</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <video id="player" controls></video>
+  <div id="loading-progress" class="progress">准备加载...</div>
+  
+  <script src="assets/player.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('id');
+    
+    if (videoId) {
+      const player = new KVVideoPlayer(videoId);
+      player.init();
+    } else {
+      document.querySelector('.progress').textContent = 
+        '错误: 缺少视频ID参数';
+    }
+  </script>
+</body>
+</html>

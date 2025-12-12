@@ -1,0 +1,18 @@
+// Cloudflare Worker 入口文件
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    // API路由分发逻辑
+    if (url.pathname.startsWith('/api/videos')) return handleVideos(request, env.KV);
+    if (url.pathname.startsWith('/api/video/')) return handleVideoMetadata(request, env.KV);
+    if (url.pathname.startsWith('/api/video/') && url.pathname.includes('/chunk/')) 
+      return handleVideoChunk(request, env.KV);
+    
+    return new Response('Not Found', { status: 404 });
+  }
+};
+
+// 各API处理器函数框架
+async function handleVideos(request, kvNamespace) {...}
+async function handleVideoMetadata(request, kvNamespace) {...}
+async function handleVideoChunk(request, kvNamespace) {...}

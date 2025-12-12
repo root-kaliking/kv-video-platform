@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>视频审核中心</title>
+  
+  <!-- PrimeVue CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/primevue@3.15.0/resources/primevue.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/primevue@3.15.0/resources/themes/saga-blue/theme.css">
+  <link rel="stylesheet" href="https://unpkg.com/primeicons@6.0.1/primeicons.css">
+  
+  <!-- Vue 3 CDN -->
+  <script src="https://unpkg.com/vue@3.2.47/dist/vue.global.js"></script>
+  
+  <!-- PrimeVue CDN -->
+  <script src="https://unpkg.com/primevue@3.15.0/core/core.min.js"></script>
+  <script src="https://unpkg.com/primevue@3.15.0/datatable/datatable.min.js"></script>
+  <script src="https://unpkg.com/primevue@3.15.0/column/column.min.js"></script>
+  <script src="https://unpkg.com/primevue@3.15.0/button/button.min.js"></script>
+  <script src="https://unpkg.com/primevue@3.15.0/dialog/dialog.min.js"></script>
+  <script src="https://unpkg.com/primevue@3.15.0/inputtext/inputtext.min.js"></script>
+  <script src="https://unpkg.com/primevue@3.15.0/chartjs/chart.min.js"></script>
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="card" style="background-color: #2563eb; color: white; padding: 20px 0;">
+      <div class="container">
+        <h1><i class="pi pi-shield" style="font-size: 1.5rem"></i> 视频审核中心</h1>
+      </div>
+    </div>
+    
+    <div class="container">
+      <div class="card">
+        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb">
+          <h2>待审核视频 ({{ pendingVideos.length }})</h2>
+        </div>
+        
+        <p-datatable :value="pendingVideos" :paginator="true" :rows="10" 
+                     paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink"
+                     class="p-datatable-sm">
+          <p-column field="title" header="标题" :sortable="true"></p-column>
+          <p-column field="createdAt" header="上传时间" :sortable="true"></p-column>
+          <p-column field="duration" header="时长" :sortable="true">
+            <template #body="slotProps">
+              {{ formatDuration(slotProps.data.duration) }}
+            </template>
+          </p-column>
+          <p-column header="操作">
+            <template #body="slotProps">
+              <p-button label="审核" @click="openReviewDialog(slotProps.data)"
+                        class="p-button-warning p-button-sm" />
+            </template>
+          </p-column>
+        </p-datatable>
+      </div>
+    </div>
+    
+    <!-- 审核对话框 -->
+    <p-dialog v-model:visible="reviewDialogVisible" header="视频审核" :modal="true" :style="{width: '50vw'}">
+      <div v-if="selectedVideo">
+        <h3>{{ selectedVideo.title }}</h3>
+        <p>上传于: {{ new Date(selectedVideo.createdAt).toLocaleString() }}</p>
+        <p>时长: {{ formatDuration(selectedVideo.duration) }}</p>
+        
+        <div style="margin: 20px 0">
+          <p-radio-button name="decision" value="approve" v-model="reviewDecision" 
+                          label="通过" class="p-mr-3" />
+          <p-radio-button name="decision" value="reject" v-model="reviewDecision" 
+                          label="拒绝" />
+        </div>
+        
+        <div v-if="reviewDecision === 'reject'">
+          <p>拒绝理由: </p>
+          <p-inputtextarea v-model="rejectReason" rows="5" style="width: 100%"/>
+        </div>
+      </div>
+      
+      <template #footer>
+        <p-button label="取消" @click="reviewDialogVisible = false" class="p-button-secondary"/>
+        <p-button label="提交" @click="submitReview" class="p-button-primary" 
+                 :disabled="!reviewDecision || (reviewDecision === 'reject' && !rejectReason)"/>
+      </template>
+    </p-dialog>
+  </div>
+  
+  <script>
+    const { createApp, ref, reactive, onMounted } = Vue;
+    const app = createApp({
+      setup() {
+        const pendingVideos = ref([]);
+        const reviewDialogVisible = ref(false);
+        const selectedVideo = ref(null);
+        const reviewDecision = ref('');
+        const rejectReason = ref('');
+        
+        const fetchPendingVideos = async () => {
+          try {
+            const token = localStorage.getItem('admin_token');
+            if (!token) throw new Error('未登录');
+            
+            const response = await fetch('/admin/pending', {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error('获取数据失败');
+            
+            pendingVideos.value = await response.json();
+          } catch (error) {
+            alert('错误: ' + error.message);
+            console.error('获取待审视频错误:', error);
+          }
+        };
+        
+        const openReviewDialog = (video) => {
+          selectedVideo.value = video;
+          reviewDecision.value = '';
+          rejectReason.value = '';
+          reviewDialogVisible.value = true;
+        };
+        
+        const submitReview = async () => {
+          try {
+            const token = localStorage.getItem('admin_token');
+            if (!token || !selectedVideo.value) return;
+            
+            const response = await fetch(`/admin/video/${selectedVideo.value.id}/review`, {
+              method: 'POST',
+              headers: { 
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                decision: reviewDecision.value,
+                reason: rejectReason.value
+              })
+            });
+            
+            if (!response.ok) throw new Error('审核提交失败');
+            
+            // 更新本地数据
+            fetchPendingVideos();
+            reviewDialogVisible.value = false;
+            alert('审核已提交！');
+          } catch (error) {
+            alert('审核错误: ' + error.message);
+          }
+        };
+        
+        const formatDuration = (seconds) => {
+          const mins = Math.floor(seconds / 60);
+          const secs = Math.floor(seconds % 60);
+          return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+        
+        // 初始化
+        onMounted(() => {
+          fetchPendingVideos();
+        });
+        
+        return {
+          pendingVideos,
+          reviewDialogVisible,
+          selectedVideo,
+          reviewDecision,
+          rejectReason,
+          openReviewDialog,
+          submitReview,
+          formatDuration
+        };
+      }
+    });
+    
+    // 注册PrimeVue组件
+    app.use(primevue.default);
+    
+    // 挂载应用
+    app.mount('#app');
+  </script>
+</body>
+</html>
