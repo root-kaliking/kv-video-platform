@@ -1,0 +1,17 @@
+[build]
+command = "npm install && npm run build"
+
+[compatibility_flags]
+nodejs_compat = true
+
+[services]
+{ binding = "MAIL", service = "cf-mail-service", environment = "production" }
+
+kv_namespaces = [
+  { binding = "VIDEO_KV", id = "..." },
+  { binding = "APP_CONFIG", id = "config-store" }
+]
+
+[vars]
+DEFAULT_MAIL_API = "https://cloudmail.example/api"
+JWT_SECRET = "@JWT_SECRET" # 云端密钥绑定
